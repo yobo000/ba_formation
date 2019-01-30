@@ -10,6 +10,8 @@ import random
 import logging
 from networkx.utils import py_random_state
 from networkx.generators.classic import empty_graph
+import argparse
+import requests
 
 N = 3000  # 10000
 # edge pramas 3
@@ -24,7 +26,7 @@ THERSHOLD = 0.3
 TOLERANT = 0.3
 DEFFUANT_COEFF = 0.5
 PRECISION = 0.00001  # 由于random_sample只在(0,1)
-LOOP_NUM = 400000  # 循环次数, 需要足够大
+LOOP_NUM = 500000  # 循环次数, 需要足够大
 
 logging.basicConfig(
     level=logging.INFO,
@@ -32,23 +34,56 @@ logging.basicConfig(
     filename="output.log")
 logger = logging.getLogger(__name__)
 
+METADATA_URL = 'http://metadata.google.internal/computeMetadata/v1/'
+METADATA_HEADERS = {'Metadata-Flavor': 'Google'}
+SERVICE_ACCOUNT = 'default'
 
-def show_degree_distribution(G):
-    degree_sequence = sorted([d for n, d in G.degree()], reverse=True)
-    degreeCount = collections.Counter(degree_sequence)
-    deg, cnt = zip(*degreeCount.items())
-    deg = np.array(deg)
-    cnt = np.array(cnt)
-    connectivity = np.divide(cnt, N)
-    deg_log = deg  # np.log10(deg)
-    deg_cnt = connectivity  # np.log10(connectivity)
-    order = np.argsort(deg_log)
-    deg_log_array = np.array(deg_log)[order]
-    deg_cnt_array = np.array(deg_cnt)[order]
-    plt.loglog(deg_log_array, deg_cnt_array, ".")
-    # plt.show()
-    plt.savefig('result1_rnd.png')
 
+def get_access_token():
+    url = '{}instance/service-accounts/{}/token'.format(
+        METADATA_URL, SERVICE_ACCOUNT)
+
+    # Request an access token from the metadata server.
+    r = requests.get(url, headers=METADATA_HEADERS)
+    r.raise_for_status()
+
+    # Extract the access token from the response.
+    access_token = r.json()['access_token']
+
+    return access_token
+
+
+def list_buckets(project_id, access_token):
+    url = 'https://www.googleapis.com/storage/v1/b'
+    params = {
+        'project': project_id
+    }
+    headers = {
+        'Authorization': 'Bearer {}'.format(access_token)
+    }
+
+    r = requests.get(url, params=params, headers=headers)
+    r.raise_for_status()
+
+    return r.json()
+
+
+def upload_file(bucket_name, access_token):
+    url = "https://www.googleapis.com/upload/storage/v1/b/" + bucket_name + "/o"
+    params = {
+        'uploadType': "media",
+        'name': "result1_rnd.png"
+    }
+    data = open('./result1_rnd.png', 'rb').read()
+    headers = {
+        'Authorization': 'Bearer {}'.format(access_token),
+        "Content-Type": "image/png"
+    }
+    r = requests.post(url, params=params,
+                      headers=headers, data=data)
+    r.raise_for_status()
+
+    return r.json()
 
 def save_distribution(G):
     fig, (ax1, ax2) = plt.subplots(2, 1)
@@ -73,16 +108,6 @@ def save_distribution(G):
     ax2.hist(opinions, bins=bins)
 
     plt.savefig('result_rnd.png')
-
-
-def show_opinion_distribution(G):
-    opinions = np.array(list(nx.get_node_attributes(G, 'opinion').values()))
-    # hist_data = np.histogram(opinions.values())
-    bins = [0.01 * n for n in range(100)]
-    plt.hist(opinions, bins=bins)
-    plt.title("Histogram of opinions")
-    # plt.show()
-    plt.savefig('result2_rnd.png')
 
 
 def opinion_thershold(opinion):
@@ -208,7 +233,21 @@ def opinion_formation(G):
     return G
 
 
-if __name__ == '__main__':
+def main(project_id):
     G = barabasi_albert_with_opinion_graph(N, M)
     G = opinion_formation(G)
     save_distribution(G)
+    access_token = get_access_token()
+    buckets = list_buckets(project_id, access_token)
+    bucket_name = buckets["items"][0]["id"]
+    response = upload_file(bucket_name, access_token)
+    return response
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('project_id', help='Your Google Cloud project ID.')
+    args = parser.parse_args()
+    main(args.project_id)

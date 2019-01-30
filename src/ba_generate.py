@@ -11,11 +11,11 @@ from operator import itemgetter
 from networkx.utils import py_random_state
 from networkx.generators.classic import empty_graph
 
-N = 10000
+N = 5000
 # edge pramas
 M = 3
 # growth node number
-M_0 = 50
+M_0 = 30
 # iter times
 T = 10
 # deffuant tolerant
@@ -34,7 +34,7 @@ def show_degree_distribution(G):
     order = np.argsort(deg_log)
     deg_log_array = np.array(deg_log)[order]
     deg_cnt_array = np.array(deg_cnt)[order]
-    plt.loglog(deg_log_array, deg_cnt_array, ".")
+    plt.loglog(deg_log_array[2:], deg_cnt_array[2:], ".")
     plt.show()
 
 
@@ -53,7 +53,7 @@ def opinion_filter(opinion, pa_nodes):
     return list(map(lambda x: x[0], targets))
 
 
-def _random_subset(seq, m, rng):
+def _random_subset(pa_nodes, seq, m, rng):
     """ Return m unique elements from seq.
 
     This differs from random.sample which can return repeated
@@ -65,7 +65,10 @@ def _random_subset(seq, m, rng):
     targets = set()
     while len(targets) < m:
         x = rng.choice(seq)
-        targets.add(x)
+        if x in pa_nodes:
+            targets.add(x)
+        else:
+            pass
     return targets
 
 
@@ -80,28 +83,26 @@ def barabasi_albert_with_opinion_graph(n, m, seed=None):
                                " and m < n, m = %d, n = %d" % (m, n))
 
     # Add m initial nodes (m0 in barabasi-speak)
-    G = empty_graph(m)
+    G = empty_graph(M_0)
     # Set opinion and filter targets
     opinion = True
     if opinion:
-        s = np.random.random_sample(m)
+        s = np.random.random_sample(M_0)
         # print("initial value:", s)
         nx.set_node_attributes(G, dict(enumerate(s)), 'opinion')
-    # Target nodes for new edges
-    targets = list(range(m))
     # List of existing nodes, with nodes repeated once for each adjacent edge
-    repeated_nodes = []
+    repeated_nodes = list(G.nodes(data=False))
     # Start adding the other n-m nodes. The first node is m.
     source = m
     while source < n:
-        if opinion:
-            opinion_value = np.random.random_sample()
-            # Filter nodes from the targets
-            nodes = list(G.nodes(data=True))
-            pa_nodes = itemgetter(*targets)(nodes)
-            targets = opinion_filter(opinion_value, pa_nodes)
-            # Add node with opinion
-            G.add_node(source, opinion=opinion_value)
+        opinion_value = np.random.random_sample()
+        # Filter nodes from the targets
+        nodes = list(G.nodes(data=True))
+        # pa_nodes = itemgetter(*targets)(nodes)
+        pa_nodes = opinion_filter(opinion_value, nodes)
+        targets = _random_subset(pa_nodes, repeated_nodes, m, seed)
+        # Add node with opinion
+        G.add_node(source, opinion=opinion_value)
         # Add edges to m nodes from the source.
         G.add_edges_from(zip([source] * m, targets))
         # Add one node to the list for each new edge just created.
@@ -110,7 +111,7 @@ def barabasi_albert_with_opinion_graph(n, m, seed=None):
         repeated_nodes.extend([source] * m)
         # Now choose m unique nodes from the existing nodes
         # Pick uniformly from repeated_nodes (preferential attachment)
-        targets = _random_subset(repeated_nodes, m, seed)
+        # targets = _random_subset(repeated_nodes, m, seed)
         source += 1
     return G
 

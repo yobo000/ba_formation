@@ -8,21 +8,28 @@ import numpy as np
 import collections
 import random
 from operator import itemgetter
+import logging
 
 from networkx.utils import py_random_state
 from networkx.generators.classic import empty_graph
 
-N = 10000  # 10000
-# edge pramas
+N = 1000  # 10000
+# edge pramas 3
 M = 3  # 3
-# growth node number
-M_0 = 50
-# iter times
-T = 10
+# growth node number 50
+M_0 = 1
+# iter times 10
+T = 1
 # deffuant tolerant
 TOLERANT = 0.3
-PRECISION = 0.00001  # 临时使用, 由于random_sample只在(0,1)
-CONVERGENCE_COUNTER = 7  # 每20次不需要formation的次数
+PRECISION = 0.0001  # 临时使用, 由于random_sample只在(0,1)
+CONVERGENCE_COUNTER = 12  # 每20次不需要formation的次数
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(message)s',
+    filename="output.log")
+logger = logging.getLogger(__name__)
 
 
 def show_degree_distribution(G):
@@ -39,7 +46,7 @@ def show_degree_distribution(G):
     deg_cnt_array = np.array(deg_cnt)[order]
     plt.loglog(deg_log_array, deg_cnt_array, ".")
     plt.show()
-    # plt.savefig('result.png')
+    plt.savefig('result.png')
 
 
 def show_opinion_distribution(G):
@@ -49,6 +56,7 @@ def show_opinion_distribution(G):
     plt.hist(opinions, bins=bins)
     plt.title("Histogram of opinions")
     plt.show()
+    plt.savefig('result2.png')
 
 
 def deffuant_value(opinion):
@@ -93,7 +101,7 @@ def barabasi_albert_with_opinion_graph(n, m, seed=None):
     # Add m initial nodes (m0 in barabasi-speak)
     G = empty_graph(m)
     s = np.random.random_sample(m)
-    # print("initial value:", s)
+    # print("initial value:", dict(enumerate(s)))
     nx.set_node_attributes(G, dict(enumerate(s)), 'opinion')
     # Target nodes for new edges
     targets = list(range(m))
@@ -129,11 +137,14 @@ def formation(node1, node2):
     value1 = G.node[node1]['opinion']
     value2 = G.node[node2]['opinion']
     diff = abs(value1 - value2)
-    if diff > TOLERANT or diff < PRECISION:
-        return False
-    else:
+    if diff < TOLERANT and diff > PRECISION:
         value = (value1 + value2) / 2
+        # SHOULD use DEFFUANT_COEFF
         return value
+    elif diff < PRECISION:
+        return 0
+    else:
+        return False
 
 
 def is_not_convergence(loop, counter):
@@ -153,8 +164,8 @@ def opinion_formation(G):
     2. formation
     3. 重复直到收敛
     only once: 只做一次，在最终N节点时
-    period: 没加入n个节点时，做
-    per node: 没加入一个节点便做一次
+    period: 每加入n个节点时，做
+    per node: 每加入一个节点便做一次
 
     在容忍度内, 取均值，容忍度外 断开edge # 断开edge，并未提及
     """
@@ -162,17 +173,19 @@ def opinion_formation(G):
     loop = 1
     not_convergence = True
     while not_convergence:
+        # G.edges 返回一个有两个node编号的tuple
         edge = random.choice(list(G.edges(data=False)))
         # random edges
         value = formation(*edge)
-        if value:
+        if value > 0:
             node1, node2 = edge
             G.node[node1]['opinion'] = value
             G.node[node2]['opinion'] = value
+        elif value == 0:
+            counter += 1
         else:
             # remove edge
-            # G.remove_edge(*edge)
-            counter += 1
+            G.remove_edge(*edge)
         loop, counter, not_convergence = is_not_convergence(loop, counter)
     return G
 
@@ -180,8 +193,12 @@ def opinion_formation(G):
 if __name__ == '__main__':
     G = barabasi_albert_with_opinion_graph(N, M)
     # show_degree_distribution(G)
-    print(nx.number_of_edges(G))
+    # show_opinion_distribution(G)
+    # opinions = nx.get_node_attributes(G, 'opinion')
+    # for opinion in opinions.values():
+    #    print(opinion)
     G = opinion_formation(G)
+    show_opinion_distribution(G)
     show_opinion_distribution(G)
     # nx.draw(G, with_labels=True)
     # plt.show()

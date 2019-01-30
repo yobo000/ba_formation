@@ -11,6 +11,8 @@ import collections
 
 # G = nx.barabasi_albert_graph(10, 3)
 G = nx.erdos_renyi_graph(5, 0.5)
+bb = nx.betweenness_centrality(G)
+print(bb)
 G1 = G
 G2 = G
 print(G.edges())
