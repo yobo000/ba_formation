@@ -72,9 +72,9 @@ def upload_file(bucket_name, access_token):
     url = "https://www.googleapis.com/upload/storage/v1/b/" + bucket_name + "/o"
     params = {
         'uploadType': "media",
-        'name': "result1_rnd.png"
+        'name': "result_rnd.png"
     }
-    data = open('./result1_rnd.png', 'rb').read()
+    data = open('./result_rnd.png', 'rb').read()
     headers = {
         'Authorization': 'Bearer {}'.format(access_token),
         "Content-Type": "image/png"
@@ -183,7 +183,7 @@ def barabasi_albert_with_opinion_graph(n, m, seed=None):
     return G
 
 
-def formation(node1, node2):
+def formation(G, node1, node2):
     """
     value = node1.value + node2.value
     """
@@ -217,7 +217,7 @@ def opinion_formation(G):
         if edges:
             edge = random.choice(edges)
             # random edges
-            value1, value2 = formation(*edge)
+            value1, value2 = formation(G, *edge)
             if value2:
                 node1, node2 = edge
                 G.node[node1]['opinion'] = value1
@@ -249,5 +249,7 @@ if __name__ == '__main__':
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('project_id', help='Your Google Cloud project ID.')
+    parser.add_argument('-m', dest="num", metavar='N', type=int,
+                        help='The number of items', default=M_0)
     args = parser.parse_args()
     main(args.project_id)
