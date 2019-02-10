@@ -38,6 +38,7 @@ celery.conf.update(app.config)
 def function1(project_id="", func_id=1, size_num=N, init_num=M_0, loop_num=50000, threshold=THERSHOLD, param=DEFFUANT_COEFF):
     # do once
     network = DissNetowrk(
+        func_id=func_id,
         size_num=size_num,
         init_num=init_num,
         loop_num=loop_num,
@@ -57,6 +58,7 @@ def function1(project_id="", func_id=1, size_num=N, init_num=M_0, loop_num=50000
 def function2(project_id="", func_id=2, size_num=N, init_num=M_0, loop_num=50000, threshold=THERSHOLD, param=DEFFUANT_COEFF):
     # for each node is adding
     network = DissNetowrk(
+        func_id=func_id,
         size_num=size_num,
         init_num=init_num,
         loop_num=loop_num,
