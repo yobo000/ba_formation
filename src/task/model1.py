@@ -12,6 +12,8 @@ from networkx.generators.classic import empty_graph
 import requests
 import time
 
+from utils import firebase_init
+
 # edge pramas 3
 M = 3  # 3
 PRECISION = 0.00001  # 由于random_sample只在(0,1)
@@ -252,7 +254,7 @@ class DissNetowrk(object):
                 break
         return self.graph
 
-    def upload_file(self, bucket_name, access_token):
+    def upload_file(self, bucket_name, access_token, project_id):
         url = "https://www.googleapis.com/upload/storage/v1/b/" + bucket_name + "/o"
         params = {
             'uploadType': "media",
@@ -266,5 +268,10 @@ class DissNetowrk(object):
         r = requests.post(url, params=params,
                           headers=headers, data=data)
         r.raise_for_status()
-
+        db = firebase_init(project_id)
+        doc_ref = db.collection('result').document(str(int(time.time())))
+        doc_ref.set({
+            'name': self.filename,
+            'time': time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+        })
         return r.json()

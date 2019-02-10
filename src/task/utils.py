@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 import requests
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
 
 METADATA_URL = 'http://metadata.google.internal/computeMetadata/v1/'
 METADATA_HEADERS = {'Metadata-Flavor': 'Google'}
@@ -33,3 +36,14 @@ def list_buckets(project_id, access_token):
     r.raise_for_status()
 
     return r.json()
+
+
+def firebase_init(project_id):
+        # Use the application default credentials
+    cred = credentials.ApplicationDefault()
+    firebase_admin.initialize_app(cred, {
+        'projectId': project_id,
+    })
+
+    db = firestore.client()
+    return db

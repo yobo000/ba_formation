@@ -102,6 +102,7 @@ def index():
                 "loop_num": loop_num,
                 "threshold": threshold,
                 "param": param})
+            return task.task_id
         else:
             return "null"
 
