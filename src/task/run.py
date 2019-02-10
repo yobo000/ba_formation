@@ -50,7 +50,7 @@ def function1(project_id="", func_id=1, size_num=N, init_num=M_0, loop_num=50000
     access_token = get_access_token()
     buckets = list_buckets(project_id, access_token)
     bucket_name = buckets["items"][0]["id"]
-    response = network.upload_file(bucket_name, access_token)
+    response = network.upload_file(bucket_name, access_token, project_id)
     return response
 
 
@@ -69,7 +69,7 @@ def function2(project_id="", func_id=2, size_num=N, init_num=M_0, loop_num=50000
     access_token = get_access_token()
     buckets = list_buckets(project_id, access_token)
     bucket_name = buckets["items"][0]["id"]
-    response = network.upload_file(bucket_name, access_token)
+    response = network.upload_file(bucket_name, access_token, project_id)
     return response
 
 
