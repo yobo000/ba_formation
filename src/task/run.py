@@ -35,7 +35,7 @@ celery.conf.update(app.config)
 
 
 @celery.task
-def function1(project_id="", size_num=N, init_num=M_0, loop_num=50000, threshold=THERSHOLD, param=DEFFUANT_COEFF):
+def function1(project_id="", func_id=1, size_num=N, init_num=M_0, loop_num=50000, threshold=THERSHOLD, param=DEFFUANT_COEFF):
     # do once
     network = DissNetowrk(
         size_num=size_num,
@@ -54,7 +54,7 @@ def function1(project_id="", size_num=N, init_num=M_0, loop_num=50000, threshold
 
 
 @celery.task
-def function2(project_id="", size_num=N, init_num=M_0, loop_num=50000, threshold=THERSHOLD, param=DEFFUANT_COEFF):
+def function2(project_id="", func_id=2, size_num=N, init_num=M_0, loop_num=50000, threshold=THERSHOLD, param=DEFFUANT_COEFF):
     # for each node is adding
     network = DissNetowrk(
         size_num=size_num,
@@ -76,25 +76,27 @@ def index():
     if request.method == 'GET':
         return 'flask'
     elif request.method == 'POST':
-        func_id = request.args.get('func')
+        func_id = int(request.args.get('func'))
         project_id = request.args.get('id')
         size_num = int(request.args.get('size'))
         init_num = int(request.args.get('init'))
         loop_num = int(request.args.get('loop'))
         threshold = float(request.args.get('threshold'))
         param = float(request.args.get('param'))
-        if func_id == "1":
+        if func_id == 1:
             task = function1.apply_async(kwargs={
                 "project_id": project_id,
+                "func_id": func_id,
                 "size_num": size_num,
                 "init_num": init_num,
                 "loop_num": loop_num,
                 "threshold": threshold,
                 "param": param})
             return task.task_id
-        elif func_id == "2":
+        elif func_id == 2:
             task = function2.apply_async(kwargs={
                 "project_id": project_id,
+                "func_id": func_id,
                 "size_num": size_num,
                 "init_num": init_num,
                 "loop_num": loop_num,

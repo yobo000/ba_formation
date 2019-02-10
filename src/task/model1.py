@@ -23,14 +23,22 @@ class DissNetowrk(object):
         super(DissNetowrk, self).__init__()
         self.size_num = kw["size_num"]
         self.init_num = kw["init_num"]
+        self.func_id = kw["func_id"]
         self.growth = M
         self.loop_num = kw["loop_num"]
         self.threshold = kw["threshold"]
         self.param = kw["param"]
         self.graph = None
-        self.filename = str(self.size_num) + '-' \
-            + str(self.loop_num) + '-' + str(self.threshold) + '-' \
-            + str(self.param)
+        if self.func_id == 1:
+            self.filename = str(self.size_num) + '-' \
+                + str(self.loop_num) + '-' + str(self.threshold) + '-' \
+                + str(self.param)
+        elif self.func_id == 2:
+            self.filename = str(self.size_num) + '-' \
+                + 'inGrowth' + '-' + str(self.threshold) + '-' \
+                + str(self.param)
+        else:
+            pass
 
     def opinion_thershold(self, opinion):
         max_value = opinion + self.threshold
