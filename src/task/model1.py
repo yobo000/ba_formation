@@ -17,6 +17,7 @@ from utils import firebase_init
 # edge pramas 3
 M = 3  # 3
 PRECISION = 0.00001  # 由于random_sample只在(0,1)
+INIT_SIZE = 300
 
 
 class DissNetowrk(object):
@@ -152,24 +153,26 @@ class DissNetowrk(object):
         repeated_nodes = list(self.graph.nodes(data=False))
         # Start adding the other n-m nodes. The first node is m.
         source = self.growth
-        while source < self.size_num:
+        while source < INIT_SIZE:
             opinion_value = np.random.random_sample()
-            # Filter nodes from the targets
             nodes = list(self.graph.nodes(data=True))
-            # pa_nodes = itemgetter(*targets)(nodes)
             pa_nodes = self.opinion_filter(opinion_value, nodes)
             targets = self._random_subset(pa_nodes, repeated_nodes, self.growth, seed)
-            # Add node with opinion
             self.graph.add_node(source, opinion=opinion_value)
-            # Add edges to m nodes from the source.
             self.graph.add_edges_from(zip([source] * self.growth, targets))
-            # Add one node to the list for each new edge just created.
             repeated_nodes.extend(targets)
-            # And the new node "source" has m edges to add to the list.
             repeated_nodes.extend([source] * self.growth)
-            # Now choose m unique nodes from the existing nodes
-            # Pick uniformly from repeated_nodes (preferential attachment)
-            # targets = _random_subset(repeated_nodes, m, seed)
+            source += 1
+        while source < self.size_num:
+            opinion_value = np.random.random_sample()
+            nodes = list(self.graph.nodes(data=True))
+            pa_nodes = self.opinion_filter(opinion_value, nodes)
+            targets = self._random_subset(pa_nodes, repeated_nodes, self.growth, seed)
+            self.graph.add_node(source, opinion=opinion_value)
+            self.graph.add_edges_from(zip([source] * self.growth, targets))
+            repeated_nodes.extend(targets)
+            repeated_nodes.extend([source] * self.growth)
+            # formation in growth
             self.opinion_formation_in_growth()
             source += 1
         return self.graph
@@ -232,7 +235,7 @@ class DissNetowrk(object):
         loop = 1
         # counter = 0
         # not_convergence = True
-        loop_num = np.random.randint(40, 120)
+        loop_num = np.random.randint(40, 80)
         while loop < loop_num:
             # G.edges 返回一个有两个node编号的tuple
             edges = list(self.graph.edges(data=False))
