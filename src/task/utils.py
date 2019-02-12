@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import requests
 import firebase_admin
-from flask import g
 from firebase_admin import credentials
 from firebase_admin import firestore
 
@@ -42,13 +41,9 @@ def list_buckets(project_id, access_token):
 def firebase_init(project_id):
         # Use the application default credentials
     cred = credentials.ApplicationDefault()
-    if g.init:
-        firebase_admin.initialize_app(cred, {
+    firebase_admin.initialize_app(cred, {
             'projectId': project_id,
         })
-        g.init = False
-    else:
-        pass
     return
 
 
