@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, request
+from flask import Flask, request, g
 from celery import Celery
 # from tasks import function1
 import logging
-from utils import get_access_token, list_buckets
+from utils import get_access_token, list_buckets, firebase_init
 from model1 import DissNetowrk
 
 
@@ -32,6 +32,7 @@ app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
 
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
+g.init = True
 
 
 @celery.task
@@ -85,6 +86,7 @@ def index():
         loop_num = int(request.args.get('loop'))
         threshold = float(request.args.get('threshold'))
         param = float(request.args.get('param'))
+        firebase_init(project_id)
         if func_id == 1:
             task = function1.apply_async(kwargs={
                 "project_id": project_id,

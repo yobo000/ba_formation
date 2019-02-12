@@ -271,7 +271,7 @@ class DissNetowrk(object):
         r = requests.post(url, params=params,
                           headers=headers, data=data)
         r.raise_for_status()
-        db = firebase_init(project_id)
+        db = get_db()
         doc_ref = db.collection('result').document(str(int(time.time())))
         doc_ref.set({
             'name': self.filename,
