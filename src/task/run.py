@@ -36,7 +36,7 @@ firebase_init("disstask")
 
 
 @celery.task
-def function1(project_id="", func_id=1, size_num=N, init_num=M_0, loop_num=50000, threshold=THERSHOLD, param=DEFFUANT_COEFF):
+def function1(project_id="", func_id=1, size_num=N, init_num=M_0, loop_num=50000, threshold=THERSHOLD, param=DEFFUANT_COEFF, link=1. reversing=1):
     # do once
     network = DissNetowrk(
         func_id=func_id,
@@ -44,7 +44,9 @@ def function1(project_id="", func_id=1, size_num=N, init_num=M_0, loop_num=50000
         init_num=init_num,
         loop_num=loop_num,
         threshold=threshold,
-        param=param)
+        param=param,
+        link_cut=bool(link),
+        reversing=bool(reversing))
     network.barabasi_albert_with_opinion_graph()
     network.opinion_formation()
     network.save_distribution()
@@ -56,7 +58,7 @@ def function1(project_id="", func_id=1, size_num=N, init_num=M_0, loop_num=50000
 
 
 @celery.task
-def function2(project_id="", func_id=2, size_num=N, init_num=M_0, loop_num=50000, threshold=THERSHOLD, param=DEFFUANT_COEFF):
+def function2(project_id="", func_id=2, size_num=N, init_num=M_0, loop_num=50000, threshold=THERSHOLD, param=DEFFUANT_COEFF, link=1. reversing=1):
     # for each node is adding
     network = DissNetowrk(
         func_id=func_id,
@@ -64,7 +66,9 @@ def function2(project_id="", func_id=2, size_num=N, init_num=M_0, loop_num=50000
         init_num=init_num,
         loop_num=loop_num,
         threshold=threshold,
-        param=param)
+        param=param,
+        link_cut=bool(link),
+        reversing=bool(reversing))
     network.barabasi_albert_with_opinion_graph_formation()
     network.save_distribution()
     access_token = get_access_token()
