@@ -84,6 +84,8 @@ def index():
         size_num = int(request.args.get('size'))
         init_num = int(request.args.get('init'))
         loop_num = int(request.args.get('loop'))
+        link_cut = int(request.args.get('link'))
+        reversing = int(request.args.get('reversing'))
         threshold = float(request.args.get('threshold'))
         param = float(request.args.get('param'))
         if func_id == 1:
@@ -93,6 +95,8 @@ def index():
                 "size_num": size_num,
                 "init_num": init_num,
                 "loop_num": loop_num,
+                "link": link_cut,
+                "reversing": reversing,
                 "threshold": threshold,
                 "param": param})
             return task.task_id
@@ -103,6 +107,8 @@ def index():
                 "size_num": size_num,
                 "init_num": init_num,
                 "loop_num": loop_num,
+                "link": link_cut,
+                "reversing": reversing,
                 "threshold": threshold,
                 "param": param})
             return task.task_id

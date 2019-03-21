@@ -1,0 +1,4 @@
+*.log
+share/*
+task/share/*
+

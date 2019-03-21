@@ -5,6 +5,7 @@
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+from sklearn import linear_model
 import collections
 import random
 from networkx.utils import py_random_state
@@ -12,7 +13,7 @@ from networkx.generators.classic import empty_graph
 import requests
 import time
 
-from utils import firebase_init
+from utils import get_db
 
 # edge pramas 3
 M = 3  # 3
@@ -32,6 +33,8 @@ class DissNetowrk(object):
         self.threshold = kw["threshold"]
         self.param = kw["param"]
         self.graph = None
+        self.link_cut = kw["link"]
+        self.reversing = kw["reversing"]
         if self.func_id == 1:
             self.filename = str(self.size_num) + '-' \
                 + str(self.loop_num) + '-' + str(self.threshold) + '-' \
@@ -55,7 +58,11 @@ class DissNetowrk(object):
         targets = list(filter(
             lambda x: x[1]["opinion"] < end and x[1]["opinion"] > start,
             pa_nodes))
-        return list(map(lambda x: x[0], targets))
+        target_nodes = {}
+        for node in targets:
+            target_nodes[node[0]] = True
+        # return list(map(lambda x: x[0], targets))
+        return target_nodes
 
     def _random_subset(self, pa_nodes, seq, m, rng):
         """ Return m unique elements from seq.
@@ -69,7 +76,8 @@ class DissNetowrk(object):
         targets = set()
         while len(targets) < m:
             x = rng.choice(seq)
-            if x in pa_nodes:
+            # if x in pa_nodes:
+            if pa_nodes.get(x, False):
                 targets.add(x)
             else:
                 pass
@@ -89,8 +97,15 @@ class DissNetowrk(object):
         order = np.argsort(deg_log)
         deg_log_array = np.array(deg_log)[order]
         deg_cnt_array = np.array(deg_cnt)[order]
+        x, y = map(np.log, [deg_log_array[2:], deg_cnt_array[2:]])
+
+        cut = int(self.size_num / 6)
+        ax1.plot(x, y, ".")
+        regr = linear_model.LinearRegression()
+        regr.fit(x[:cut, np.newaxis], y[:cut])
         ax1.loglog(deg_log_array[2:], deg_cnt_array[2:], ".")
         ax1.set_ylim(0, 5)
+        ax1.plot(x, regr.predict(x[:, np.newaxis]), color='red', linewidth=3)
 
         opinions = np.array(list(nx.get_node_attributes(self.graph, 'opinion').values()))
         # hist_data = np.histogram(opinions.values())
@@ -177,6 +192,18 @@ class DissNetowrk(object):
             source += 1
         return self.graph
 
+    def reversing_proc(self, node):
+        """
+        for the link-cut node add a new link on it
+        """
+        seed = None
+        nodes = list(self.graph.nodes(data=True))
+        value = self.graph.node[node]['opinion']
+        pa_nodes = self.opinion_filter(value, nodes)
+        repeated_nodes = list(reduce(lambda y1, y2: y1 + y2, map(lambda x: [x] * len(nx.neighbors(self.graph, node)), pa_nodes.keys())))
+        targets = self._random_subset(pa_nodes, repeated_nodes, 1, seed)
+        self.graph.add_edges_from((node, targets))
+
     def formation(self, node1, node2):
         """
         value = node1.value + node2.value
@@ -218,8 +245,12 @@ class DissNetowrk(object):
                 elif value1:
                     pass
                 else:
-                    # remove edge
-                    self.graph.remove_edge(*edge)
+                    # link-cut
+                    if self.link_cut:
+                        self.graph.remove_edge(*edge)
+                        if self.reversing:
+                            self.reversing_proc(node1)
+                            self.reversing_proc(node2)
                 loop += 1
             else:
                 break

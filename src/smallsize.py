@@ -2,18 +2,19 @@
 """
     generate ab graph with data
 """
+import collections
+import logging
+import random
+
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-import collections
-import random
-import logging
-from networkx.utils import py_random_state
-from networkx.generators.classic import empty_graph
-import argparse
 import requests
+from networkx.generators.classic import empty_graph
+from networkx.utils import py_random_state
+from sklearn import linear_model
 
-N = 3000  # 10000
+N = 1000  # 10000
 # edge pramas 3
 M = 3  # 3
 # growth node number 50
@@ -26,7 +27,7 @@ THERSHOLD = 0.3
 TOLERANT = 0.3
 DEFFUANT_COEFF = 0.5
 PRECISION = 0.00001  # 由于random_sample只在(0,1)
-LOOP_NUM = 500000  # 循环次数, 需要足够大
+LOOP_NUM = 10  # 循环次数, 需要足够大
 
 logging.basicConfig(
     level=logging.INFO,
@@ -85,6 +86,7 @@ def upload_file(bucket_name, access_token):
 
     return r.json()
 
+
 def save_distribution(G):
     fig, (ax1, ax2) = plt.subplots(2, 1)
 
@@ -99,15 +101,24 @@ def save_distribution(G):
     order = np.argsort(deg_log)
     deg_log_array = np.array(deg_log)[order]
     deg_cnt_array = np.array(deg_cnt)[order]
-    ax1.loglog(deg_log_array[2:], deg_cnt_array[2:], ".")
-    ax1.set_ylim(0, 5)
-
+    x, y = map(np.log, [deg_log_array[2:], deg_cnt_array[2:]])
+    # ax1.loglog(deg_log_array[2:], deg_cnt_array[2:], ".")
+    # x_train, y_train = map(lambda s: s.reshape(1, -1), [x, y])
+    cut = int(N / 6)
+    ax1.plot(x, y, ".")
+    regr = linear_model.LinearRegression()
+    regr.fit(x[:cut, np.newaxis], y[:cut])
+    # y_pred = regr.predict(x[:, np.newaxis])
+    ax1.plot(x, regr.predict(x[:, np.newaxis]), color='red', linewidth=3)
+    # ax1.set_ylim(0, 5)
+    """
     opinions = np.array(list(nx.get_node_attributes(G, 'opinion').values()))
     # hist_data = np.histogram(opinions.values())
     bins = [0.01 * n for n in range(100)]
     ax2.hist(opinions, bins=bins)
-
-    plt.savefig('result_rnd.png')
+    """
+    # plt.savefig('result_rnd.png')
+    plt.show()
 
 
 def opinion_thershold(opinion):
@@ -122,7 +133,11 @@ def opinion_filter(opinion, pa_nodes):
     start, end = opinion_thershold(opinion)
     targets = list(filter(
         lambda x: x[1]["opinion"] < end and x[1]["opinion"] > start, pa_nodes))
-    return list(map(lambda x: x[0], targets))
+    target_nodes = {}
+    for node in targets:
+        target_nodes[node[0]] = True
+    # return list(map(lambda x: x[0], targets))
+    return target_nodes
 
 
 def _random_subset(pa_nodes, seq, m, rng):
@@ -137,11 +152,25 @@ def _random_subset(pa_nodes, seq, m, rng):
     targets = set()
     while len(targets) < m:
         x = rng.choice(seq)
-        if x in pa_nodes:
+        # if x in pa_nodes:
+        if pa_nodes.get(x, False):
             targets.add(x)
         else:
             pass
     return targets
+
+
+def reversing_proc(graph, node):
+    """
+    for the link-cut node add a new link on it
+    """
+    seed = None
+    nodes = list(graph.nodes(data=True))
+    value = graph.node[node]['opinion']
+    pa_nodes = opinion_filter(value, nodes)
+    repeated_nodes = list(reduce(lambda y1, y2: y1 + y2, map(lambda x: [x] * len(nx.neighbors(graph, node)), pa_nodes.keys())))
+    targets = _random_subset(pa_nodes, repeated_nodes, 1, seed)
+    graph.add_edges_from((node, targets))
 
 
 @py_random_state(2)
@@ -200,7 +229,7 @@ def formation(G, node1, node2):
         return False, False
 
 
-def opinion_formation(G):
+def opinion_formation(G, link_cut, reversing):
     """
     1. 随机取edges
     2. formation
@@ -225,31 +254,23 @@ def opinion_formation(G):
             elif value1:
                 pass
             else:
-                # remove edge
-                G.remove_edge(*edge)
+                # link-cut
+                if link_cut:
+                    G.remove_edge(*edge)
+                    if reversing:
+                        reversing_proc(node1)
+                        reversing_proc(node2)
             loop += 1
         else:
             break
     return G
 
 
-def main(project_id):
+def main():
     G = barabasi_albert_with_opinion_graph(N, M)
-    G = opinion_formation(G)
+    G = opinion_formation(G, True, True)
     save_distribution(G)
-    access_token = get_access_token()
-    buckets = list_buckets(project_id, access_token)
-    bucket_name = buckets["items"][0]["id"]
-    response = upload_file(bucket_name, access_token)
-    return response
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('project_id', help='Your Google Cloud project ID.')
-    parser.add_argument('-m', dest="num", metavar='N', type=int,
-                        help='The number of items', default=M_0)
-    args = parser.parse_args()
-    main(args.project_id)
+    main()

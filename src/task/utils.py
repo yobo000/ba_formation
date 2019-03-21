@@ -42,8 +42,7 @@ def firebase_init(project_id):
         # Use the application default credentials
     cred = credentials.ApplicationDefault()
     firebase_admin.initialize_app(cred, {
-            'projectId': project_id,
-        })
+        'projectId': project_id})
     return
 
 
