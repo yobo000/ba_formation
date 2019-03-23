@@ -33,6 +33,7 @@ class DissNetowrk(object):
         self.threshold = kw["threshold"]
         self.param = kw["param"]
         self.graph = None
+        self.opinion = kw['opinion']
         self.link_cut = kw["link"]
         self.reversing = kw["reversing"]
         if self.func_id == 1:
@@ -104,7 +105,6 @@ class DissNetowrk(object):
         regr = linear_model.LinearRegression()
         regr.fit(x[:cut, np.newaxis], y[:cut])
         ax1.loglog(deg_log_array[2:], deg_cnt_array[2:], ".")
-        ax1.set_ylim(0, 5)
         ax1.plot(x, regr.predict(x[:, np.newaxis]), color='red', linewidth=3)
 
         opinions = np.array(list(nx.get_node_attributes(self.graph, 'opinion').values()))
@@ -132,11 +132,16 @@ class DissNetowrk(object):
         # Start adding the other n-m nodes. The first node is m.
         source = self.growth
         while source < self.size_num:
+            pa_nodes = {}
             opinion_value = np.random.random_sample()
             # Filter nodes from the targets
             nodes = list(self.graph.nodes(data=True))
             # pa_nodes = itemgetter(*targets)(nodes)
-            pa_nodes = self.opinion_filter(opinion_value, nodes)
+            if self.opinion:
+                pa_nodes = self.opinion_filter(opinion_value, nodes)
+            else:
+                for node in nodes:
+                    pa_nodes[node[0]] = True
             targets = self._random_subset(pa_nodes, repeated_nodes, self.growth, seed)
             # Add node with opinion
             self.graph.add_node(source, opinion=opinion_value)
@@ -192,17 +197,17 @@ class DissNetowrk(object):
             source += 1
         return self.graph
 
+    @py_random_state(2)
     def reversing_proc(self, node):
         """
         for the link-cut node add a new link on it
         """
-        seed = None
         nodes = list(self.graph.nodes(data=True))
         value = self.graph.node[node]['opinion']
         pa_nodes = self.opinion_filter(value, nodes)
-        repeated_nodes = list(reduce(lambda y1, y2: y1 + y2, map(lambda x: [x] * len(nx.neighbors(self.graph, node)), pa_nodes.keys())))
+        repeated_nodes = list(reduce(lambda y1, y2: y1 + y2, map(lambda x: [x] * len(list(nx.neighbors(self.graph, x))), pa_nodes.keys())))
         targets = self._random_subset(pa_nodes, repeated_nodes, 1, seed)
-        self.graph.add_edges_from((node, targets))
+        self.graph.add_edges_from([(node, targets.pop())])
 
     def formation(self, node1, node2):
         """
@@ -245,6 +250,7 @@ class DissNetowrk(object):
                 elif value1:
                     pass
                 else:
+                    node1, node2 = edge
                     # link-cut
                     if self.link_cut:
                         self.graph.remove_edge(*edge)
@@ -281,8 +287,13 @@ class DissNetowrk(object):
                 elif value1:
                     pass
                 else:
-                    # remove edge
-                    self.graph.remove_edge(*edge)
+                    node1, node2 = edge
+                    # link-cut
+                    if self.link_cut:
+                        self.graph.remove_edge(*edge)
+                        if self.reversing:
+                            self.reversing_proc(node1)
+                            self.reversing_proc(node2)
                 loop += 1
             else:
                 break

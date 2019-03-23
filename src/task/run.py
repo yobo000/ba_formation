@@ -36,7 +36,7 @@ firebase_init("disstask")
 
 
 @celery.task
-def function1(project_id="", func_id=1, size_num=N, init_num=M_0, loop_num=50000, threshold=THERSHOLD, param=DEFFUANT_COEFF, link=1. reversing=1):
+def function1(project_id="", func_id=1, size_num=N, init_num=M_0, loop_num=50000, threshold=THERSHOLD, param=DEFFUANT_COEFF, link=1, reversing=1, opinion=1):
     # do once
     network = DissNetowrk(
         func_id=func_id,
@@ -45,7 +45,8 @@ def function1(project_id="", func_id=1, size_num=N, init_num=M_0, loop_num=50000
         loop_num=loop_num,
         threshold=threshold,
         param=param,
-        link_cut=bool(link),
+        opinion=bool(opinion),
+        link=bool(link),
         reversing=bool(reversing))
     network.barabasi_albert_with_opinion_graph()
     network.opinion_formation()
@@ -58,7 +59,7 @@ def function1(project_id="", func_id=1, size_num=N, init_num=M_0, loop_num=50000
 
 
 @celery.task
-def function2(project_id="", func_id=2, size_num=N, init_num=M_0, loop_num=50000, threshold=THERSHOLD, param=DEFFUANT_COEFF, link=1. reversing=1):
+def function2(project_id="", func_id=2, size_num=N, init_num=M_0, loop_num=50000, threshold=THERSHOLD, param=DEFFUANT_COEFF, link=1, reversing=1, opinion=1):
     # for each node is adding
     network = DissNetowrk(
         func_id=func_id,
@@ -67,7 +68,8 @@ def function2(project_id="", func_id=2, size_num=N, init_num=M_0, loop_num=50000
         loop_num=loop_num,
         threshold=threshold,
         param=param,
-        link_cut=bool(link),
+        opinion=bool(opinion),
+        link=bool(link),
         reversing=bool(reversing))
     network.barabasi_albert_with_opinion_graph_formation()
     network.save_distribution()
@@ -89,6 +91,7 @@ def index():
         init_num = int(request.args.get('init'))
         loop_num = int(request.args.get('loop'))
         link_cut = int(request.args.get('link'))
+        opinion = int(request.args.get('opinion'))
         reversing = int(request.args.get('reversing'))
         threshold = float(request.args.get('threshold'))
         param = float(request.args.get('param'))
@@ -102,6 +105,7 @@ def index():
                 "link": link_cut,
                 "reversing": reversing,
                 "threshold": threshold,
+                "opinion": opinion,
                 "param": param})
             return task.task_id
         elif func_id == 2:
@@ -113,6 +117,7 @@ def index():
                 "loop_num": loop_num,
                 "link": link_cut,
                 "reversing": reversing,
+                "opinion": opinion,
                 "threshold": threshold,
                 "param": param})
             return task.task_id
