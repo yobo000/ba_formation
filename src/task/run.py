@@ -112,11 +112,13 @@ def function3(project_id="", func_id=2, size_num=N, init_num=M_0, loop_num=50000
         reversing=bool(reversing))
     graph1= network1.barabasi_albert_with_opinion_graph_formation()
     graph2 = network2.barabasi_albert_with_opinion_graph_formation()
-    filename = save_two_opinion_distribution(graph1, graph2, size_num, control, threshold, param, opinion, link, reversing)
+    filename_d = save_two_degree_distribution(graph1, graph2, size_num, control, threshold, param, opinion, link, reversing)
+    filename_o = save_two_opinion_distribution(graph1, graph2, size_num, control, threshold, param, opinion, link, reversing)
     access_token = get_access_token()
     buckets = list_buckets(project_id, access_token)
     bucket_name = buckets["items"][0]["id"]
-    response = upload_file(bucket_name, access_token, project_id, filename)
+    upload_file(bucket_name, access_token, project_id, filename_d)
+    response = upload_file(bucket_name, access_token, project_id, filename_o)
     return response
 
 @app.route('/', methods=['GET', 'POST'])
