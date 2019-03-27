@@ -3,7 +3,7 @@ from flask import Flask, request
 from celery import Celery
 # from tasks import function1
 import logging
-from utils import get_access_token, list_buckets, firebase_init
+from utils import *
 from model1 import DissNetowrk
 
 
@@ -80,6 +80,46 @@ def function2(project_id="", func_id=2, size_num=N, init_num=M_0, loop_num=50000
     return response
 
 
+@celery.task
+def function3(project_id="", func_id=2, size_num=N, init_num=M_0, loop_num=50000, threshold=THERSHOLD, param=DEFFUANT_COEFF, link=1, reversing=1, opinion=1, control=""):
+    # for each node is adding
+    network1 = DissNetowrk(
+        func_id=func_id,
+        size_num=size_num,
+        init_num=init_num,
+        loop_num=loop_num,
+        threshold=threshold,
+        param=param,
+        opinion=bool(opinion),
+        link=bool(link),
+        reversing=bool(reversing))
+    if control == "opinion":
+        opinion = not opinion
+    elif control == "link":
+        link = not link
+    elif control == "reversing":
+        reversing = not reversing
+    else:
+        pass
+    network2 = DissNetowrk(
+        func_id=func_id,
+        size_num=size_num,
+        init_num=init_num,
+        loop_num=loop_num,
+        threshold=threshold,
+        param=param,
+        opinion=bool(opinion),
+        link=bool(link),
+        reversing=bool(reversing))
+    network1.barabasi_albert_with_opinion_graph_formation()
+    network2.barabasi_albert_with_opinion_graph_formation()
+    filename = save_two_opinion_distribution(network1, network2)
+    access_token = get_access_token()
+    buckets = list_buckets(project_id, access_token)
+    bucket_name = buckets["items"][0]["id"]
+    response = upload_file(bucket_name, access_token, project_id, filename)
+    return response
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'GET':
@@ -95,6 +135,7 @@ def index():
         reversing = int(request.args.get('reversing'))
         threshold = float(request.args.get('threshold'))
         param = float(request.args.get('param'))
+        control = str(request.args.get('control', ''))
         if func_id == 1:
             task = function1.apply_async(kwargs={
                 "project_id": project_id,
@@ -121,6 +162,19 @@ def index():
                 "threshold": threshold,
                 "param": param})
             return task.task_id
+        elif func_id == 3:
+            task = function3.apply_async(kwargs={
+                "project_id": project_id,
+                "func_id": func_id,
+                "size_num": size_num,
+                "init_num": init_num,
+                "loop_num": loop_num,
+                "link": link_cut,
+                "reversing": reversing,
+                "opinion": opinion,
+                "threshold": threshold,
+                "param": param,
+                "control": control})
         else:
             return "null"
 

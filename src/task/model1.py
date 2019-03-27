@@ -5,6 +5,7 @@
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+from functools import reduce
 from sklearn import linear_model
 import collections
 import random
@@ -17,7 +18,7 @@ from utils import get_db
 
 # edge pramas 3
 M = 3  # 3
-PRECISION = 0.00001  # 由于random_sample只在(0,1)
+PRECISION = 0.00001 # 由于random_sample只在(0,1)
 INIT_SIZE = 300
 
 
@@ -186,7 +187,12 @@ class DissNetowrk(object):
         while source < self.size_num:
             opinion_value = np.random.random_sample()
             nodes = list(self.graph.nodes(data=True))
-            pa_nodes = self.opinion_filter(opinion_value, nodes)
+            # pa_nodes = self.opinion_filter(opinion_value, nodes)
+            if self.opinion:
+                pa_nodes = self.opinion_filter(opinion_value, nodes)
+            else:
+                for node in nodes:
+                    pa_nodes[node[0]] = True
             targets = self._random_subset(pa_nodes, repeated_nodes, self.growth, seed)
             self.graph.add_node(source, opinion=opinion_value)
             self.graph.add_edges_from(zip([source] * self.growth, targets))
@@ -198,7 +204,7 @@ class DissNetowrk(object):
         return self.graph
 
     @py_random_state(2)
-    def reversing_proc(self, node):
+    def reversing_proc(self, node, seed=None):
         """
         for the link-cut node add a new link on it
         """
@@ -272,7 +278,7 @@ class DissNetowrk(object):
         loop = 1
         # counter = 0
         # not_convergence = True
-        loop_num = np.random.randint(40, 80)
+        loop_num = np.random.randint(50, 100)
         while loop < loop_num:
             # G.edges 返回一个有两个node编号的tuple
             edges = list(self.graph.edges(data=False))

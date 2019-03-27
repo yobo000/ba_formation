@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import matplotlib.pyplot as plt
+import time
 import requests
 import firebase_admin
 from firebase_admin import credentials
@@ -38,6 +40,28 @@ def list_buckets(project_id, access_token):
     return r.json()
 
 
+def upload_file(self, bucket_name, access_token, project_id, filename):
+    url = "https://www.googleapis.com/upload/storage/v1/b/" + bucket_name + "/o"
+    params = {
+        'uploadType': "media",
+        'name': filename
+    }
+    data = open('./' + filename, 'rb').read()
+    headers = {
+        'Authorization': 'Bearer {}'.format(access_token),
+        "Content-Type": "image/png"
+    }
+    r = requests.post(url, params=params,
+                      headers=headers, data=data)
+    r.raise_for_status()
+    db = get_db()
+    doc_ref = db.collection('result').document(str(int(time.time())))
+    doc_ref.set({
+        'name': filename,
+        'time': time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+    })
+    return r.json()
+
 def firebase_init(project_id):
         # Use the application default credentials
     cred = credentials.ApplicationDefault()
@@ -49,3 +73,22 @@ def firebase_init(project_id):
 def get_db():
     db = firestore.client()
     return db
+
+
+def graph_opinion(graph):
+    opinions = np.array(list(nx.get_node_attributes(graph, 'opinion').values()))
+    return opinions
+
+
+def save_two_opinion_distribution(graph1, graph2):
+    file = filename += '-' + time.strftime("%d%m") + ".png"
+    fig, (ax1, ax2) = plt.subplots(2, 1)
+    opinions1 = graph_opinion(graph1)
+    opinions2 = graph_opinion(graph2)
+    bins = [0.01 * n for n in range(100)]
+    ax1.hist(opinions1, bins=bins)
+    ax1.set_ylabel('With deffuantm model')
+    ax2.hist(opinions2, bins=bins)
+    ax2.set_ylabel('Without deffuantm model')
+    plt.savefig(filename)
+    return filename
