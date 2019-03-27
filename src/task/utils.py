@@ -80,8 +80,10 @@ def graph_opinion(graph):
     return opinions
 
 
-def save_two_opinion_distribution(graph1, graph2):
-    file = filename += '-' + time.strftime("%d%m") + ".png"
+def save_two_opinion_distribution(graph1, graph2, size_num, control, threshold, prama, opinion, link, reversing):
+    filename = str(size_num) + '-' \
+               + str(control) + '-' + str(threshold) + '-' \
+               + str(param) + '-' + str(opinion)+str(link)+str(reversing)+ time.strftime("%d%m") + ".png"
     fig, (ax1, ax2) = plt.subplots(2, 1)
     opinions1 = graph_opinion(graph1)
     opinions2 = graph_opinion(graph2)
