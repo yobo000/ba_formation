@@ -82,7 +82,6 @@ def function2(project_id="", func_id=2, size_num=N, init_num=M_0, loop_num=50000
 
 @celery.task
 def function3(project_id="", func_id=2, size_num=N, init_num=M_0, loop_num=50000, threshold=THERSHOLD, param=DEFFUANT_COEFF, link=1, reversing=1, opinion=1, control=""):
-    # for each node is adding
     network1 = DissNetowrk(
         func_id=func_id,
         size_num=size_num,
@@ -111,9 +110,9 @@ def function3(project_id="", func_id=2, size_num=N, init_num=M_0, loop_num=50000
         opinion=bool(opinion),
         link=bool(link),
         reversing=bool(reversing))
-    network1.barabasi_albert_with_opinion_graph_formation()
-    network2.barabasi_albert_with_opinion_graph_formation()
-    filename = save_two_opinion_distribution(network1, network2, size_num, control, threshold, prama, opinion, link, reversing)
+    graph1= network1.barabasi_albert_with_opinion_graph_formation()
+    graph2 = network2.barabasi_albert_with_opinion_graph_formation()
+    filename = save_two_opinion_distribution(graph1, graph2, size_num, control, threshold, param, opinion, link, reversing)
     access_token = get_access_token()
     buckets = list_buckets(project_id, access_token)
     bucket_name = buckets["items"][0]["id"]
@@ -175,6 +174,7 @@ def index():
                 "threshold": threshold,
                 "param": param,
                 "control": control})
+            return task.task_id
         else:
             return "null"
 

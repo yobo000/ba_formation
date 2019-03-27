@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import matplotlib.pyplot as plt
+import networkx as nx
 import time
 import requests
+import numpy as np
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
@@ -40,7 +42,7 @@ def list_buckets(project_id, access_token):
     return r.json()
 
 
-def upload_file(self, bucket_name, access_token, project_id, filename):
+def upload_file(bucket_name, access_token, project_id, filename):
     url = "https://www.googleapis.com/upload/storage/v1/b/" + bucket_name + "/o"
     params = {
         'uploadType': "media",
@@ -80,7 +82,10 @@ def graph_opinion(graph):
     return opinions
 
 
-def save_two_opinion_distribution(graph1, graph2, size_num, control, threshold, prama, opinion, link, reversing):
+def save_two_opinion_distribution(graph1, graph2, size_num, control, threshold, param, opinion, link, reversing):
+    link = bool(link)
+    opinion = bool(opinion)
+    reversing = bool(reversing)
     filename = str(size_num) + '-' \
                + str(control) + '-' + str(threshold) + '-' \
                + str(param) + '-' + str(opinion)+str(link)+str(reversing)+ time.strftime("%d%m") + ".png"
@@ -89,8 +94,16 @@ def save_two_opinion_distribution(graph1, graph2, size_num, control, threshold, 
     opinions2 = graph_opinion(graph2)
     bins = [0.01 * n for n in range(100)]
     ax1.hist(opinions1, bins=bins)
-    ax1.set_ylabel('With deffuantm model')
+    ax1.set_ylabel('Link-cut: '+ str(link)+' reversing: '+str(reversing))
+    if control == "opinion":
+        opinion = not opinion
+    elif control == "link":
+        link = not link
+    elif control == "reversing":
+        reversing = not reversing
+    else:
+        pass
     ax2.hist(opinions2, bins=bins)
-    ax2.set_ylabel('Without deffuantm model')
+    ax2.set_ylabel('Link-cut: '+str(link)+' reversing: '+str(reversing))
     plt.savefig(filename)
     return filename
