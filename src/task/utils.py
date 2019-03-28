@@ -93,8 +93,8 @@ def save_two_opinion_distribution(graph1, graph2, size_num, control, threshold, 
     opinions1 = graph_opinion(graph1)
     opinions2 = graph_opinion(graph2)
     bins = [0.01 * n for n in range(100)]
-    ax1.hist(opinions1, bins=bins)
-    ax1.set_ylabel('Link-cut: '+ str(link)+', reversing: '+str(reversing)+', opinion: '+str(opinion))
+    ax2.hist(opinions2, bins=bins)
+    ax2.set_ylabel('Link-cut: '+ str(link)+', reversing: '+str(reversing)+', opinion: '+str(opinion))
     if control == "opinion":
         opinion = not opinion
     elif control == "link":
@@ -103,8 +103,8 @@ def save_two_opinion_distribution(graph1, graph2, size_num, control, threshold, 
         reversing = not reversing
     else:
         pass
-    ax2.hist(opinions2, bins=bins)
-    ax2.set_ylabel('Link-cut: '+ str(link)+', reversing: '+str(reversing)+', opinion: '+str(opinion))
+    ax1.hist(opinions1, bins=bins)
+    ax1.set_ylabel('Link-cut: '+ str(link)+', reversing: '+str(reversing)+', opinion: '+str(opinion))
     plt.savefig(filename)
     return filename
 
@@ -132,10 +132,9 @@ def save_two_distribution(G1, G2, size_num, control, threshold, param, opinion, 
                + str(param) + '-' + str(opinion)+ '-'+str(link)+'-'+str(reversing)+ time.strftime("%d%m") + "d.png"
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
-    # grap
-    deg_log_array1, deg_cnt_array1 = graph_loglog(G1)
-    ax.loglog(deg_log_array1[2:], deg_cnt_array1[2:], ".", color="red", label='Link-cut: '+ str(link)+', reversing: '+str(reversing)+', opinion: '+str(opinion))
-    if control == "opinion":
+    deg_log_array2, deg_cnt_array2 = graph_loglog(G2)
+    ax.loglog(deg_log_array2, deg_cnt_array2, ".", color="blue", label='Link-cut: '+str(link)+', reversing: '+str(reversing)+', opinion: '+str(opinion))
+   if control == "opinion":
         opinion = not opinion
     elif control == "link":
         link = not link
@@ -143,8 +142,8 @@ def save_two_distribution(G1, G2, size_num, control, threshold, param, opinion, 
         reversing = not reversing
     else:
         pass
-    deg_log_array2, deg_cnt_array2 = graph_loglog(G2)
-    ax.loglog(deg_log_array2[2:], deg_cnt_array2[2:], ".", color="blue", label='Link-cut: '+str(link)+', reversing: '+str(reversing)+', opinion: '+str(opinion))
+    deg_log_array1, deg_cnt_array1 = graph_loglog(G1)
+    ax.loglog(deg_log_array1, deg_cnt_array1, ".", color="red", label='Link-cut: '+ str(link)+', reversing: '+str(reversing)+', opinion: '+str(opinion))
     # ax.plot(x1, y1, ".", color='red')
     plt.legend()
     # plt.show()
