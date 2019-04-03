@@ -5,16 +5,16 @@
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-from functools import reduce, filter
+from functools import reduce
 from sklearn import linear_model
 import collections
 import random
-from networkx.utils import *
+from networkx.utils import py_random_state
 from networkx.generators.classic import complete_graph, empty_graph
 import requests
 import time
 
-from utils import get_db
+from utils import *
 
 # edge pramas 3
 M = 3  # 3
@@ -115,7 +115,7 @@ class DissNetowrk(object):
         self.filename += '-' + time.strftime("%d%m") + ".png"
         plt.savefig(self.filename)
 
-    def save_degree_opinion_distribution(self):
+    def save_degree_opinion_distribution(self, count):
         fig = plt.figure()
         ax = fig.add_subplot(1,1,1)
         nodes = nx.get_node_attributes(self.graph, 'opinion')
@@ -127,7 +127,7 @@ class DissNetowrk(object):
         nopinions = np.array(opinions)
         ndegrees = list(map(np.log, np.array(degrees)))
         ax.plot(nopinions, ndegrees, ".", color='blue')
-        filename = 'dots-'+'-'+ time.strftime("%d%m") + ".png"
+        filename = 'dots-'+str(count)+'-'+ time.strftime("%d%m") + ".png"
         plt.savefig(filename)
         return filename
 
@@ -137,30 +137,30 @@ class DissNetowrk(object):
         else:
             return ax
 
-    def save_inter_distribution(self, count, param):
+    def save_inter_distribution(self, count):
         """
         1. print degree-opinion dots
         2. degree distribution separate by opinion
         """
         thresholds = (0.3,0.7)
         titles= ["0-0.3", "0.3-0.7", "0.7-1"]
-        geq = []
-        leq = []
-        mid = []
-        degree_sequence = []
+        geq_degree_sequence = []
+        leq_degree_sequence = []
+        mid_degree_sequence = []
+        # degree_sequence = []
         fig, axes = plt.subplots(nrows=2, ncols=3)
         start = 0
-        nodes = nx.get_node_attributes(G, 'opinion')
+        nodes = nx.get_node_attributes(self.graph, 'opinion')
         for node, value in nodes.items():
             if value >= thresholds[-1]:
-                geq.append(node)
-                geq_degree_sequence.append(len(self.graph.degree(node)))
+                # geq.append(node)
+                geq_degree_sequence.append(len(nx.edges(self.graph, node)))
             elif value <= thresholds[0]:
-                leq.append(node)
-                leq_degree_sequence.append(len(self.graph.degree(node)))
+                # leq.append(node)
+                leq_degree_sequence.append(len(nx.edges(self.graph, node)))
             else:
-                mid.append(node)
-                mid_degree_sequence.append(len(self.graph.degree(node)))
+                # mid.append(node)
+                mid_degree_sequence.append(len(nx.edges(self.graph, node)))
         degree_sequence = [leq_degree_sequence, mid_degree_sequence, geq_degree_sequence]
         for i in range(3):
             degreeCount = collections.Counter(degree_sequence[i])
@@ -173,13 +173,12 @@ class DissNetowrk(object):
             order = np.argsort(deg_log)
             deg_log_array = np.array(deg_log)[order]
             deg_cnt_array = np.array(deg_cnt)[order]
-            x, y = map(np.log, [deg_log_array[3:], deg_cnt_array[3:]])
-            axes[i, 0].loglog(deg_log_array[2:], deg_cnt_array[2:], ".")
-            axes[i, 0].set_title(titles[i])
+            axes[0, i].loglog(deg_log_array, deg_cnt_array, ".")
+            axes[0, i].set_title(titles[i])
 
             opinions = np.array(list(nx.get_node_attributes(self.graph, 'opinion').values()))
             bins = [0.01 * n for n in range(100)]
-            axes[i, 1].hist(opinions, bins=bins)
+            axes[1, i].hist(opinions, bins=bins)
         filename = str(count) + '-' + time.strftime("%d%m") + ".png"
         plt.savefig(filename)
         return filename
@@ -271,7 +270,7 @@ class DissNetowrk(object):
             self.opinion_formation_in_growth()
             source += 1
             if source in [500, 1000, 1500, 2000]:
-                filename1 = self.save_degree_opinion_distribution()
+                filename1 = self.save_degree_opinion_distribution(source)
                 filename2 = self.save_inter_distribution(source)
                 access_token = get_access_token()
                 buckets = list_buckets('disstask', access_token)
