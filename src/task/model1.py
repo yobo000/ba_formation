@@ -10,7 +10,7 @@ from sklearn import linear_model
 import collections
 import random
 from networkx.utils import py_random_state
-from networkx.generators.classic import empty_graph
+from networkx.generators.classic import complete_graph, empty_graph
 import requests
 import time
 
@@ -124,7 +124,7 @@ class DissNetowrk(object):
             raise nx.NetworkXError("Barabási–Albert network must have m >= 1"
                                    " and m < n, m = %d, n = %d" % (self.growth, self.size_num))
         # Add m initial nodes (m0 in barabasi-speak)
-        self.graph = empty_graph(self.init_num)
+        self.graph = complete_graph(self.init_num)
         s = np.random.random_sample(self.init_num)
         # print("initial value:", dict(enumerate(s)))
         nx.set_node_attributes(self.graph, dict(enumerate(s)), 'opinion')
@@ -167,7 +167,7 @@ class DissNetowrk(object):
             raise nx.NetworkXError("Barabási–Albert network must have m >= 1"
                                    " and m < n, m = %d, n = %d" % (self.growth, self.size_num))
         # Add m initial nodes (m0 in barabasi-speak)
-        self.graph = empty_graph(self.init_num)
+        self.graph = complete_graph(self.init_num)
         s = np.random.random_sample(self.init_num)
         # print("initial value:", dict(enumerate(s)))
         nx.set_node_attributes(self.graph, dict(enumerate(s)), 'opinion')

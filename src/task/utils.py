@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+import collections
 import matplotlib.pyplot as plt
+from sklearn import linear_model
 import networkx as nx
 import time
 import requests
@@ -94,7 +96,7 @@ def save_two_opinion_distribution(graph1, graph2, size_num, control, threshold, 
     opinions2 = graph_opinion(graph2)
     bins = [0.01 * n for n in range(100)]
     ax2.hist(opinions2, bins=bins)
-    ax2.set_ylabel('Link-cut: '+ str(link)+', reversing: '+str(reversing)+', opinion: '+str(opinion))
+    ax2.set_title('Link-cut: '+ str(link)+', reversing: '+str(reversing)+', opinion: '+str(opinion))
     if control == "opinion":
         opinion = not opinion
     elif control == "link":
@@ -104,7 +106,8 @@ def save_two_opinion_distribution(graph1, graph2, size_num, control, threshold, 
     else:
         pass
     ax1.hist(opinions1, bins=bins)
-    ax1.set_ylabel('Link-cut: '+ str(link)+', reversing: '+str(reversing)+', opinion: '+str(opinion))
+    ax1.set_title('Link-cut: '+ str(link)+', reversing: '+str(reversing)+', opinion: '+str(opinion))
+    plt.tight_layout()
     plt.savefig(filename)
     return filename
 
@@ -114,7 +117,7 @@ def graph_loglog(G):
     deg, cnt = zip(*degreeCount.items())
     deg = np.array(deg)
     cnt = np.array(cnt)
-    connectivity = np.divide(cnt, N)
+    connectivity = np.divide(cnt, nx.number_of_nodes(G))
     deg_log = deg  # np.log10(deg)
     deg_cnt = connectivity  # np.log10(connectivity)
     order = np.argsort(deg_log)
@@ -123,7 +126,7 @@ def graph_loglog(G):
     return deg_log_array, deg_cnt_array
 
 
-def save_two_distribution(G1, G2, size_num, control, threshold, param, opinion, link, reversing):
+def save_two_degree_distribution(G1, G2, size_num, control, threshold, param, opinion, link, reversing):
     link = bool(link)
     opinion = bool(opinion)
     reversing = bool(reversing)
@@ -133,8 +136,11 @@ def save_two_distribution(G1, G2, size_num, control, threshold, param, opinion, 
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     deg_log_array2, deg_cnt_array2 = graph_loglog(G2)
-    ax.loglog(deg_log_array2, deg_cnt_array2, ".", color="blue", label='Link-cut: '+str(link)+', reversing: '+str(reversing)+', opinion: '+str(opinion))
-   if control == "opinion":
+    regr2 = linear_model.LinearRegression()
+    regr2.fit(np.log10(deg_log_array2[3:21, np.newaxis]), np.log10(deg_cnt_array2[3:21]))
+    gamma2 = regr2.coef_[0]
+    ax.loglog(deg_log_array2, deg_cnt_array2, ".", color="blue", label='Link-cut: '+str(link)+', reversing: '+str(reversing)+', opinion: '+str(opinion)+'\n'+r'$\gamma$ = {0:.2f}'.format(gamma2))
+    if control == "opinion":
         opinion = not opinion
     elif control == "link":
         link = not link
@@ -143,9 +149,12 @@ def save_two_distribution(G1, G2, size_num, control, threshold, param, opinion, 
     else:
         pass
     deg_log_array1, deg_cnt_array1 = graph_loglog(G1)
-    ax.loglog(deg_log_array1, deg_cnt_array1, ".", color="red", label='Link-cut: '+ str(link)+', reversing: '+str(reversing)+', opinion: '+str(opinion))
+    regr1 = linear_model.LinearRegression()
+    regr1.fit(np.log10(deg_log_array1[3:21, np.newaxis]), np.log10(deg_cnt_array1[3:21]))
+    gamma1 = regr1.coef_[0]
+    ax.loglog(deg_log_array1, deg_cnt_array1, ".", color="red", label='Link-cut: '+ str(link)+', reversing: '+str(reversing)+', opinion: '+str(opinion)+'\n'+r'$\gamma$ = {0:.2f}'.format(gamma1))
     # ax.plot(x1, y1, ".", color='red')
-    plt.legend()
+    plt.legend(loc='lower left')
     # plt.show()
-    plt.savefig("before_after.png")
-
+    plt.savefig(filename)
+    return filename
