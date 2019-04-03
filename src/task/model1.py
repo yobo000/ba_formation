@@ -4,6 +4,7 @@
 """
 import matplotlib.pyplot as plt
 import networkx as nx
+from operator import itemgetter
 import numpy as np
 from functools import reduce
 from sklearn import linear_model
@@ -144,6 +145,9 @@ class DissNetowrk(object):
         """
         thresholds = (0.3,0.7)
         titles= ["0-0.3", "0.3-0.7", "0.7-1"]
+        geq = []
+        leq = []
+        mid = []
         geq_degree_sequence = []
         leq_degree_sequence = []
         mid_degree_sequence = []
@@ -153,15 +157,16 @@ class DissNetowrk(object):
         nodes = nx.get_node_attributes(self.graph, 'opinion')
         for node, value in nodes.items():
             if value >= thresholds[-1]:
-                # geq.append(node)
+                geq.append(node)
                 geq_degree_sequence.append(len(nx.edges(self.graph, node)))
             elif value <= thresholds[0]:
-                # leq.append(node)
+                leq.append(node)
                 leq_degree_sequence.append(len(nx.edges(self.graph, node)))
             else:
-                # mid.append(node)
+                mid.append(node)
                 mid_degree_sequence.append(len(nx.edges(self.graph, node)))
         degree_sequence = [leq_degree_sequence, mid_degree_sequence, geq_degree_sequence]
+        filter_nodes = [leq, mid, geq]
         for i in range(3):
             degreeCount = collections.Counter(degree_sequence[i])
             deg, cnt = zip(*degreeCount.items())
@@ -175,9 +180,21 @@ class DissNetowrk(object):
             deg_cnt_array = np.array(deg_cnt)[order]
             axes[0, i].loglog(deg_log_array, deg_cnt_array, ".")
             axes[0, i].set_title(titles[i])
+            axes[0, i].get_yaxis().set_visible(False)
+            axes[0, i].get_xaxis().set_visible(False)
+            regr = linear_model.LinearRegression()
+            if len(deg_log_array) > 20:
+                regr.fit(np.log10(deg_log_array[3:21, np.newaxis]), np.log10(deg_cnt_array[3:21]))
+                gamma = regr1.coef_[0]
+            else:
+                gamma = 0.0
+            axes[0, i].set_xlabel(r'$\gamma$ = {0:.2f}'.format(gamma))
 
-            opinions = np.array(list(nx.get_node_attributes(self.graph, 'opinion').values()))
-            bins = [0.01 * n for n in range(100)]
+            opinions = np.array(itemgetter(*filter_nodes[i])(list(nx.get_node_attributes(self.graph, 'opinion').values())))
+            if i == 1:
+                bins = [0.01 * n for n in range(70)]
+            else:
+                bins = [0.01 * n for n in range(30)]
             axes[1, i].hist(opinions, bins=bins)
         filename = str(count) + '-' + time.strftime("%d%m") + ".png"
         plt.savefig(filename)
