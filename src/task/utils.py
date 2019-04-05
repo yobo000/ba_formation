@@ -48,7 +48,7 @@ def upload_file(bucket_name, access_token, project_id, filename):
     url = "https://www.googleapis.com/upload/storage/v1/b/" + bucket_name + "/o"
     params = {
         'uploadType': "media",
-        'name': 'l101/'+filename
+        'name': filename
     }
     data = open('./' + filename, 'rb').read()
     headers = {
@@ -111,6 +111,18 @@ def save_two_opinion_distribution(graph1, graph2, size_num, control, threshold, 
     plt.tight_layout()
     plt.savefig(filename)
     return filename
+
+
+def save_record(record1, record2):
+    fig = plt.figure()
+    length1 = len(record1)
+    length2 = len(record2)
+    ax = fig.add_subplot(1, 1, 1)
+    ax.plot(range(1, length1 + 1), record1, 'r', range(1, length2 2, record2, 'b')
+    filename = "record.png"
+    plt.savefig(filename)
+    return filename
+
 
 def graph_loglog(G):
     degree_sequence = sorted([d for n, d in G.degree()], reverse=True)

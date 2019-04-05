@@ -38,6 +38,7 @@ class DissNetowrk(object):
         self.opinion = kw['opinion']
         self.link_cut = kw["link"]
         self.reversing = kw["reversing"]
+        self.degree_record =[]
         if self.func_id == 1:
             self.filename = str(self.size_num) + '-' \
                 + str(self.loop_num) + '-' + str(self.threshold) + '-' \
@@ -115,6 +116,9 @@ class DissNetowrk(object):
         ax2.hist(opinions, bins=bins)
         self.filename += '-' + time.strftime("%d%m") + ".png"
         plt.savefig(self.filename)
+
+    def get_degree_evolution(self)
+        return self.degree_record
 
     def save_degree_opinion_distribution(self, count):
         fig = plt.figure()
@@ -275,6 +279,7 @@ class DissNetowrk(object):
             repeated_nodes.extend(targets)
             repeated_nodes.extend([source] * self.growth)
             source += 1
+            self.degree_record.append(nx.number_of_edges(self.growth))
         while source < self.size_num:
             opinion_value = np.random.random_sample()
             nodes = list(self.graph.nodes(data=True))
@@ -300,6 +305,7 @@ class DissNetowrk(object):
                 bucket_name = buckets["items"][0]["id"]
                 upload_file(bucket_name, access_token, 'disstask', filename1)
                 upload_file(bucket_name, access_token, 'disstask', filename2)
+            self.degree_record.append(nx.number_of_edges(self.growth))
         return self.graph
 
     @py_random_state(2)
