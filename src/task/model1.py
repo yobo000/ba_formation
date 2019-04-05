@@ -128,7 +128,7 @@ class DissNetowrk(object):
         nopinions = np.array(opinions)
         ndegrees = list(map(np.log, np.array(degrees)))
         ax.plot(nopinions, ndegrees, ".", color='blue')
-        filename = 'dots-'+str(count)+'-'+ time.strftime("%d%m") + ".png"
+        filename = 'dots-'+str(count)+ str(self.link_cut) + str(self.reversing) + str(self.opinion) +'-'+ time.strftime("%d%m") + ".png"
         plt.savefig(filename)
         return filename
 
@@ -180,23 +180,29 @@ class DissNetowrk(object):
             deg_cnt_array = np.array(deg_cnt)[order]
             axes[0, i].loglog(deg_log_array, deg_cnt_array, ".")
             axes[0, i].set_title(titles[i])
-            axes[0, i].get_yaxis().set_visible(False)
-            axes[0, i].get_xaxis().set_visible(False)
+            # axes[0, i].get_yaxis().set_visible(False)
+            # axes[0, i].get_xaxis().set_visible(False)
             regr = linear_model.LinearRegression()
-            if len(deg_log_array) > 20:
-                regr.fit(np.log10(deg_log_array[3:21, np.newaxis]), np.log10(deg_cnt_array[3:21]))
-                gamma = regr1.coef_[0]
+            if len(deg_log_array) > 12:
+                regr.fit(np.log10(deg_log_array[3:13, np.newaxis]), np.log10(deg_cnt_array[3:13]))
+                gamma = regr.coef_[0]
             else:
                 gamma = 0.0
-            axes[0, i].set_xlabel(r'$\gamma$ = {0:.2f}'.format(gamma))
+            axes[0, i].set_ylabel(r'$\gamma$ = {0:.2f}'.format(gamma))
 
             opinions = np.array(itemgetter(*filter_nodes[i])(list(nx.get_node_attributes(self.graph, 'opinion').values())))
             if i == 1:
-                bins = [0.01 * n for n in range(70)]
-            else:
+                bins = [0.3 + 0.01 * n for n in range(70)]
+                hist_range = (0.3, 0.7)
+            elif i == 0:
                 bins = [0.01 * n for n in range(30)]
-            axes[1, i].hist(opinions, bins=bins)
-        filename = str(count) + '-' + time.strftime("%d%m") + ".png"
+                hist_range = (0, 0.3)
+            else:
+                bins = [0.7 + 0.01 * n for n in range(30)]
+                hist_range = (0.7 ,1)
+            axes[1, i].hist(opinions, bins=bins)# , range=hist_range)
+        filename = str(count) + str(self.link_cut) + str(self.reversing) + str(self.opinion) +'-' + time.strftime("%d%m") + ".png"
+        plt.tight_layout()
         plt.savefig(filename)
         return filename
 
@@ -303,7 +309,12 @@ class DissNetowrk(object):
         """
         nodes = list(self.graph.nodes(data=True))
         value = self.graph.node[node]['opinion']
-        pa_nodes = self.opinion_filter(value, nodes)
+        if self.opinion:
+            pa_nodes = self.opinion_filter(value, nodes)
+        else:
+            pa_nodes = {}
+            for node_i in nodes:
+                pa_nodes[node_i[0]] = True
         repeated_nodes = list(reduce(lambda y1, y2: y1 + y2, map(lambda x: [x] * len(list(nx.neighbors(self.graph, x))), pa_nodes.keys())))
         targets = self._random_subset(pa_nodes, repeated_nodes, 1, seed)
         self.graph.add_edges_from([(node, targets.pop())])

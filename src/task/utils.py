@@ -48,7 +48,7 @@ def upload_file(bucket_name, access_token, project_id, filename):
     url = "https://www.googleapis.com/upload/storage/v1/b/" + bucket_name + "/o"
     params = {
         'uploadType': "media",
-        'name': filename
+        'name': 'l101/'+filename
     }
     data = open('./' + filename, 'rb').read()
     headers = {
@@ -58,12 +58,13 @@ def upload_file(bucket_name, access_token, project_id, filename):
     r = requests.post(url, params=params,
                       headers=headers, data=data)
     r.raise_for_status()
-    db = get_db()
+    """db = get_db()
     doc_ref = db.collection('result').document(str(int(time.time())))
     doc_ref.set({
         'name': filename,
         'time': time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
     })
+    """
     return r.json()
 
 def firebase_init(project_id):
@@ -137,7 +138,7 @@ def save_two_degree_distribution(G1, G2, size_num, control, threshold, param, op
     ax = fig.add_subplot(1, 1, 1)
     deg_log_array2, deg_cnt_array2 = graph_loglog(G2)
     regr2 = linear_model.LinearRegression()
-    regr2.fit(np.log10(deg_log_array2[3:21, np.newaxis]), np.log10(deg_cnt_array2[3:21]))
+    regr2.fit(np.log10(deg_log_array2[3:13, np.newaxis]), np.log10(deg_cnt_array2[3:13]))
     gamma2 = regr2.coef_[0]
     ax.loglog(deg_log_array2, deg_cnt_array2, ".", color="blue", label='Link-cut: '+str(link)+', reversing: '+str(reversing)+', opinion: '+str(opinion)+'\n'+r'$\gamma$ = {0:.2f}'.format(gamma2))
     if control == "opinion":
@@ -150,7 +151,7 @@ def save_two_degree_distribution(G1, G2, size_num, control, threshold, param, op
         pass
     deg_log_array1, deg_cnt_array1 = graph_loglog(G1)
     regr1 = linear_model.LinearRegression()
-    regr1.fit(np.log10(deg_log_array1[3:21, np.newaxis]), np.log10(deg_cnt_array1[3:21]))
+    regr1.fit(np.log10(deg_log_array1[3:13, np.newaxis]), np.log10(deg_cnt_array1[3:13]))
     gamma1 = regr1.coef_[0]
     ax.loglog(deg_log_array1, deg_cnt_array1, ".", color="red", label='Link-cut: '+ str(link)+', reversing: '+str(reversing)+', opinion: '+str(opinion)+'\n'+r'$\gamma$ = {0:.2f}'.format(gamma1))
     # ax.plot(x1, y1, ".", color='red')
