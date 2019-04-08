@@ -6,7 +6,7 @@ The purpose is for my dissertation project.
 
 #### Usage
 I mainly used [NetowrkX](https://networkx.github.io/) and Matplotlib.
-The scripts file in the **src** directory shows some examples.
+The `.py` files in the **src** directory shows some examples.
 ```
 # use pipenv or virtualenv[optional]
 pip install -r requirements.txt
@@ -24,3 +24,4 @@ Requirement:
   * google-cloudestorage-api
 
 You can install the requirements.txt in **src/task** using `pip`.
+Then use `src/task/start.sh` or `src/task/restart.sh`
