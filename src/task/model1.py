@@ -39,6 +39,7 @@ class DissNetowrk(object):
         self.link_cut = kw["link"]
         self.reversing = kw["reversing"]
         self.degree_record =[]
+        self.d = 0
         if self.func_id == 1:
             self.filename = str(self.size_num) + '-' \
                 + str(self.loop_num) + '-' + str(self.threshold) + '-' \
@@ -117,7 +118,7 @@ class DissNetowrk(object):
         self.filename += '-' + time.strftime("%d%m") + ".png"
         plt.savefig(self.filename)
 
-    def get_degree_evolution(self)
+    def get_degree_evolution(self):
         return self.degree_record
 
     def save_degree_opinion_distribution(self, count):
@@ -279,7 +280,6 @@ class DissNetowrk(object):
             repeated_nodes.extend(targets)
             repeated_nodes.extend([source] * self.growth)
             source += 1
-            self.degree_record.append(nx.number_of_edges(self.growth))
         while source < self.size_num:
             opinion_value = np.random.random_sample()
             nodes = list(self.graph.nodes(data=True))
@@ -292,6 +292,7 @@ class DissNetowrk(object):
             targets = self._random_subset(pa_nodes, repeated_nodes, self.growth, seed)
             self.graph.add_node(source, opinion=opinion_value)
             self.graph.add_edges_from(zip([source] * self.growth, targets))
+            # self.d += self.growth
             repeated_nodes.extend(targets)
             repeated_nodes.extend([source] * self.growth)
             # formation in growth
@@ -305,7 +306,6 @@ class DissNetowrk(object):
                 bucket_name = buckets["items"][0]["id"]
                 upload_file(bucket_name, access_token, 'disstask', filename1)
                 upload_file(bucket_name, access_token, 'disstask', filename2)
-            self.degree_record.append(nx.number_of_edges(self.growth))
         return self.graph
 
     @py_random_state(2)
@@ -408,8 +408,9 @@ class DissNetowrk(object):
                     if self.link_cut:
                         self.graph.remove_edge(*edge)
                         if self.reversing:
-                            self.reversing_proc(node1)
-                            self.reversing_proc(node2)
+                            rnode = random.choice(edge)
+                            self.reversing_proc(rnode)
+                            # self.reversing_proc(node2)
                 loop += 1
             else:
                 break

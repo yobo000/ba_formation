@@ -118,7 +118,7 @@ def save_record(record1, record2):
     length1 = len(record1)
     length2 = len(record2)
     ax = fig.add_subplot(1, 1, 1)
-    ax.plot(range(1, length1 + 1), record1, 'r', range(1, length2 2, record2, 'b')
+    ax.plot(range(1, length1 + 1), record1, 'r', range(1, length2+1), record2, 'b')
     filename = "record.png"
     plt.savefig(filename)
     return filename
